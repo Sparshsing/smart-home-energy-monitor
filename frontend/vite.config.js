@@ -6,5 +6,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: true, // Listen on all network interfaces
+    watch: {
+      usePolling: true,
+    },
   },
 })
