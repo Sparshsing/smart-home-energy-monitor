@@ -1,7 +1,7 @@
 Story,Task,Estimate min (hr),Estimate max (hr),Actual,Comment
-Dev Environment Setup,Create directory structure an initialize projects,0.5,1,,
-Dev Environment Setup,Setup database as docker container,0.5,1,,
-Dev Environment Setup,create initial docker compose and test,0.5,1.5,,
+Dev Environment Setup,Create directory structure an initialize projects,0.5,1,1,
+Dev Environment Setup,Setup database as docker container,0.5,1,1,
+Dev Environment Setup,create initial docker compose and test,0.5,1.5,4,enable debugging in dev env was time consuming
 User Authentication,Create PostgreSQL tables,0.5,1,,
 User Authentication,Create user model,0.5,1,,
 User Authentication,implement JWT and password hash,1,2,,

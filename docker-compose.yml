@@ -1,0 +1,123 @@
+version: '3.8'
+
+services:
+  # TimescaleDB Database
+  timescaledb:
+    image: timescale/timescaledb:latest-pg17
+    container_name: timescaledb
+    environment:
+      POSTGRES_DB: energy_monitor
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+    networks:
+      - energy_monitor_network
+
+  # Authentication Service
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    ports:
+      - "8001:8001"
+      - "5678:5678"  # Python debugger port
+    environment:
+      - DB_HOST=timescaledb
+      - DB_PORT=5432
+      - DB_NAME=energy_monitor
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - ENABLE_DEBUGPY=true
+    depends_on:
+      - timescaledb
+    networks:
+      - energy_monitor_network
+    volumes:
+      - ./auth-service:/app
+      - /app/.venv  # prevent container .venv from being created in host
+    # Override default command for development with hot reload and debugging
+    command: ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001", "--reload", "--reload-dir", "/app"]
+
+    restart: unless-stopped
+
+  # Telemetry Service
+  telemetry-service:
+    build:
+      context: ./telemetry-service
+      dockerfile: Dockerfile
+    container_name: telemetry-service
+    ports:
+      - "8002:8002"
+      - "5679:5679"  # Python debugger port
+    environment:
+      - DB_HOST=timescaledb
+      - DB_PORT=5432
+      - DB_NAME=energy_monitor
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - ENABLE_DEBUGPY=true
+    depends_on:
+      - timescaledb
+    networks:
+      - energy_monitor_network
+    volumes:
+      - ./telemetry-service:/app
+      - /app/.venv  # prevent container .venv from being created in host
+    command: ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8002", "--reload", "--reload-dir", "/app"]
+
+    restart: unless-stopped
+
+  # AI Service
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: ai-service
+    ports:
+      - "8003:8003"
+      - "5680:5680"  # Python debugger port
+    environment:
+      - DB_HOST=timescaledb
+      - DB_PORT=5432
+      - DB_NAME=energy_monitor
+      - DB_USER=postgres
+      - DB_PASSWORD=password  
+      - ENABLE_DEBUGPY=true
+    depends_on:
+      - timescaledb
+    networks:
+      - energy_monitor_network
+    volumes:
+      - ./ai-service:/app
+      - /app/.venv  # prevent container .venv from being created in host
+    command: ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003", "--reload", "--reload-dir", "/app"]
+    restart: unless-stopped
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "5173:5173"
+    networks:
+      - energy_monitor_network
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: ["npm", "run", "dev"]
+    restart: unless-stopped
+
+volumes:
+  timescale_data:
+
+networks:
+  energy_monitor_network:
+    driver: bridge
+
+
