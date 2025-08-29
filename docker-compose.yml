@@ -13,6 +13,11 @@ services:
       - "5433:5432"
     volumes:
       - timescale_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d energy_monitor"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - energy_monitor_network
 
@@ -35,8 +40,14 @@ services:
       - JWT_ALGORITHM=HS256
       - ACCESS_TOKEN_EXPIRE_MINUTES=60
       - ENABLE_DEBUGPY=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/auth/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     depends_on:
-      - timescaledb
+      timescaledb:
+        condition: service_healthy
     networks:
       - energy_monitor_network
     volumes:
@@ -66,7 +77,10 @@ services:
       - JWT_ALGORITHM=HS256
       - ENABLE_DEBUGPY=true
     depends_on:
-      - timescaledb
+      timescaledb:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
     networks:
       - energy_monitor_network
     volumes:
@@ -95,7 +109,10 @@ services:
       - JWT_ALGORITHM=HS256
       - ENABLE_DEBUGPY=true
     depends_on:
-      - timescaledb
+      timescaledb:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
     networks:
       - energy_monitor_network
     volumes:
@@ -114,6 +131,10 @@ services:
       - "5173:5173"
     networks:
       - energy_monitor_network
+    depends_on:
+      - auth-service
+      - telemetry-service
+      - ai-service
     volumes:
       - ./frontend:/app
       - /app/node_modules
