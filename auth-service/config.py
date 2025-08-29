@@ -23,7 +23,7 @@ class Settings(BaseSettings):
         return v
 
     # JWT settings
-    JWT_SECRET_KEY: str = "65b6a308af39aeedd6f65cb5b608ecb1001c2ffb1f35f02762afdd2916e08426"
+    JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 

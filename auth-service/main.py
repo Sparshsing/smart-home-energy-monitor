@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
-router = APIRouter(prefix="/auth")
+router = APIRouter(prefix="/api/auth")
 
 
 # CORS Middleware
@@ -38,7 +38,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
 DBSession = Annotated[AsyncSession, Depends(get_session)]
 
@@ -47,11 +47,12 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], sessio
     if payload is None:
         raise HTTPException(status_code=401, detail="Invalid token")
     
-    email = payload.get("sub")
-    if email is None:
+    user_id = payload.get("sub")
+    if user_id is None:
         raise HTTPException(status_code=401, detail="Invalid token")
-    
-    user = await session.exec(select(User).where(User.email == email))
+
+    user_id = int(user_id)
+    user = await session.exec(select(User).where(User.id == user_id))
     user = user.first()
     
     if user is None:
@@ -106,7 +107,7 @@ async def login_for_access_token(
     
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
+        data={"sub": str(user.id), "email": user.email, "role": user.role.value}, expires_delta=access_token_expires
     )
     
     return {"access_token": access_token, "token_type": "bearer"}
