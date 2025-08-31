@@ -6,6 +6,8 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Devices from './pages/Devices';
+import PrivateRoute from './components/PrivateRoute';
 
 const AppLayout = () => (
   <>
@@ -23,6 +25,15 @@ const router = createBrowserRouter([
       {
         path: '/',
         element: <Home />,
+      },
+      {
+        element: <PrivateRoute />,
+        children: [
+          {
+            path: '/devices',
+            element: <Devices />,
+          },
+        ],
       },
       {
         path: '/login',

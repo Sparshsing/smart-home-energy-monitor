@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import authService from '../services/authService';
 
 const AuthContext = createContext(null);
 
@@ -21,6 +22,13 @@ export const AuthProvider = ({ children }) => {
   const isAuthenticated = () => {
     return token != null;
   };
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (!storedToken) return;
+    if (!token) setToken(storedToken);
+    authService.getCurrentUser().then(setUser).catch(logout);
+  }, [token]);
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated }}>

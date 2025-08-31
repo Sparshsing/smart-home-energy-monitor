@@ -52,3 +52,13 @@ class DevicePublic(BaseModel):
     name: str
     product_id: int
     created_at: datetime
+
+# New models for analytics endpoints
+class DeviceEnergySummary(BaseModel):
+    device_id: uuid.UUID
+    device_name: str
+    total_kwh: float
+
+class TelemetryBucket(BaseModel):
+    bucket: datetime
+    avg_watts: float
