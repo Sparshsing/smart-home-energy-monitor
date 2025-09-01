@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, Depends, HTTPException, APIRouter
+from fastapi import FastAPI, Depends, HTTPException, APIRouter, Body
 from contextlib import asynccontextmanager
 from typing import Annotated, Union, List
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -13,8 +13,28 @@ import re
 
 from database import get_session, create_db_and_tables
 from sqlmodel.ext.asyncio.session import AsyncSession
-from models import Telemetry, TelemetryData, Device, DevicePublic, DeviceEnergySummary, TelemetryBucket
+from models import (
+    Telemetry, TelemetryData, Device, DevicePublic, 
+    DeviceEnergySummary, TelemetryBucket, Product, QueryRequest
+)
 from security import get_current_user, UserClaims
+
+
+def is_read_only_query(sql: str) -> bool:
+    """A simple check to ensure the query is a SELECT statement."""
+    # Normalize by removing leading whitespace and converting to uppercase
+    normalized_sql = sql.strip().upper()
+    
+    # Check if it starts with 'SELECT' or 'WITH' (for CTEs)
+    if normalized_sql.startswith("SELECT") or normalized_sql.startswith("WITH"):
+        # Further check for malicious keywords in DML/DDL
+        forbidden_keywords = ["UPDATE", "DELETE", "INSERT", "DROP", "ALTER", "TRUNCATE", "CREATE"]
+        # A simple check to see if any of these words appear as whole words
+        # This is not foolproof but catches simple cases.
+        if not any(f" {keyword} " in normalized_sql for keyword in forbidden_keywords):
+            return True
+    return False
+
 
 if os.getenv("ENABLE_DEBUGPY") == "true":
     import debugpy
@@ -42,13 +62,16 @@ router = APIRouter(prefix="/api/telemetry")
 DBSession = Annotated[AsyncSession, Depends(get_session)]
 CurrentUserClaims = Annotated[UserClaims, Depends(get_current_user)]
 
+
 @router.get("/")
 async def root():
     return {"message": "Telemetry Service Running"}
 
+
 @router.get("/health")
 async def health_check():
     return {"status": "ok"}
+
 
 @router.post("/", status_code=201)
 async def post_telemetry(
@@ -77,6 +100,7 @@ async def post_telemetry(
         await session.rollback()
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
 
+
 @router.get("/devices", response_model=List[DevicePublic])
 async def get_devices(current_user: CurrentUserClaims, session: DBSession):
     """
@@ -87,6 +111,62 @@ async def get_devices(current_user: CurrentUserClaims, session: DBSession):
     )
     devices = devices_result.all()
     return devices
+
+
+@router.get("/devices/details", response_model=List[dict])
+async def get_devices_with_product_details(current_user: CurrentUserClaims, session: DBSession):
+    """
+    Get a list of all devices with product details for the currently authenticated user.
+    """
+    query = (
+        select(Device.id, Device.name, Product.type)
+        .join(Product, Device.product_id == Product.id)
+        .where(Device.user_id == current_user.user_id)
+    )
+    results = await session.exec(query)
+    device_details = [
+        {'id': str(res.id), 'name': res.name, 'type': res.type}
+        for res in results.all()
+    ]
+    return device_details
+
+
+@router.post("/query")
+async def execute_sql_query(
+    query_request: QueryRequest,
+    current_user: CurrentUserClaims,
+    session: DBSession,
+):
+    """
+    Executes a read-only SQL query against the telemetry data for the current user.
+    The query must be a SELECT statement.
+    """
+    query = query_request.query
+    if not is_read_only_query(query):
+        raise HTTPException(status_code=400, detail="Only read-only SELECT queries are allowed.")
+
+    try:
+        results = await session.exec(text(query))
+        column_names = list(results.keys())
+        
+        # Convert results to list of dictionaries with JSON-serializable values
+        results_list = []
+        for row in results.all():
+            row_dict = {}
+            for i, value in enumerate(row):
+                if hasattr(value, '__str__') and not isinstance(value, (str, int, float, bool, type(None))):
+                    row_dict[column_names[i]] = str(value)
+                else:
+                    row_dict[column_names[i]] = value
+            results_list.append(row_dict)
+        
+        return {"columns": column_names, "rows": results_list}
+    except ProgrammingError as e:
+        # Catch errors from malformed SQL, etc.
+        raise HTTPException(status_code=400, detail=f"Error executing query: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}")
+
 
 @router.get("/summary", response_model=List[DeviceEnergySummary])
 async def get_energy_summary(
@@ -139,6 +219,7 @@ async def get_energy_summary(
         )
         for row in summary_data
     ]
+
 
 @router.get("/devices/{device_id}", response_model=List[TelemetryBucket])
 async def get_device_telemetry(

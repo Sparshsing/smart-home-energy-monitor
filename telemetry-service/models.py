@@ -62,3 +62,6 @@ class DeviceEnergySummary(BaseModel):
 class TelemetryBucket(BaseModel):
     bucket: datetime
     avg_watts: float
+
+class QueryRequest(BaseModel):
+    query: str

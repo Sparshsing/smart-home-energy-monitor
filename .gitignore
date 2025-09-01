@@ -1,41 +1,28 @@
-.vscode/
-.idea/
-*.code-workspace
-
+# Environments
 .env
-.env.*
 
-*.svg
+# Python
+__pycache__/
+*.pyc
+.venv
+venv
+*.egg-info
+dist/
+build/
+
+# Node
+node_modules
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.idea/
+.vscode/
+
+# images and notebooks
 *.jpg
 *.png
-
-logs/
-**/logs/
-*.log
-tmp/
-temp/
-
-**/node_modules/
-**/dist/
-**/build/
-**/.cache/
-
-__pycache__/
-**/__pycache__/
-
-.venv/
-**/.venv/
-venv/
-
-build/
-dist/
-
-postgres-data/
-**/postgres-data/
-pgdata/
-**/pgdata/
-db-data/
-**/db-data/
-
-project-docs/
-notes.txt
+*.svg
+*.ipynb
