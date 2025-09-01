@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const TELEMETRY_API_URL = 'http://localhost:8002/api/telemetry';
+const TELEMETRY_API_URL = import.meta.env.VITE_TELEMETRY_API_URL || 'http://localhost:8002/api/telemetry';
 
 const getAuthHeader = () => {
   const token = localStorage.getItem('token');

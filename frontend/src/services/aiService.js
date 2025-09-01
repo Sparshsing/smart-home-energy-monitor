@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const AI_API_URL = 'http://localhost:8003/api/ai';
+const AI_API_URL = import.meta.env.VITE_AI_API_URL || 'http://localhost:8003/api/ai';
 
 const getAuthHeader = () => {
   const token = localStorage.getItem('token');
