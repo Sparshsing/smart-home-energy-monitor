@@ -51,7 +51,7 @@ app = FastAPI(lifespan=lifespan, title="Telemetry Service API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Adjust for your frontend URL
+    allow_origins=["http://localhost:5173", "https://kind-sea-0bc019c0f.1.azurestaticapps.net"],  # Adjust for your frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
