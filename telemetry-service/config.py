@@ -22,6 +22,14 @@ class Settings(BaseSettings):
             )
         return v
 
+    # JWT settings
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str = "HS256"
+    
+    # Add an environment setting
+    ENVIRONMENT: str = "development"
+
     model_config = SettingsConfigDict(env_file=".env")
+
 
 settings = Settings()

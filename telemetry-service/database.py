@@ -16,6 +16,7 @@ async def create_db_and_tables(max_retries: int = 3, base_delay_seconds: float =
         try:
             async with engine.begin() as conn:
                 # 1) Ensure TimescaleDB extension (once per database)
+                # For Azure, this requires the extension to be allow-listed in Server Parameters first.
                 await conn.exec_driver_sql("CREATE EXTENSION IF NOT EXISTS timescaledb;")
 
                 # 2) Create ORM tables we own (exclude stub-only tables)

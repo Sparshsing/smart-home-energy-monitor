@@ -3,13 +3,7 @@ from fastapi.security import HTTPBearer
 import jwt
 from pydantic import BaseModel
 
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "")
-ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+from config import settings
 
 security = HTTPBearer()
 
@@ -25,7 +19,7 @@ def get_current_user(token: str = Depends(security)) -> UserClaims:
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token.credentials, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         user_id_str: str = payload.get("sub")
         email: str = payload.get("email")
         role: str = payload.get("role")
