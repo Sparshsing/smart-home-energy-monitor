@@ -1,0 +1,54 @@
+name: Build and Deploy Backend Services to Azure Container Apps
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ai-service/**'
+      - 'auth-service/**'
+      - 'telemetry-service/**'
+  workflow_dispatch:
+
+env:
+  ACR_NAME: ${{ secrets.ACR_NAME }}
+  RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
+  AUTH_APP_NAME: ${{ secrets.AUTH_SERVICE_NAME }}
+  TELEMETRY_APP_NAME: ${{ secrets.TELEMETRY_SERVICE_NAME }}
+  AI_APP_NAME: ${{ secrets.AI_SERVICE_NAME }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 'Checkout Github Action'
+      uses: actions/checkout@v3
+
+    - name: 'Login to Azure'
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: 'Build and deploy auth-service'
+      uses: azure/container-apps-deploy-action@v1
+      with:
+        appSourcePath: ${{ github.workspace }}/auth-service
+        acrName: ${{ env.ACR_NAME }}
+        containerAppName: ${{ env.AUTH_APP_NAME }}
+        resourceGroup: ${{ env.RESOURCE_GROUP }}
+
+    - name: 'Build and deploy telemetry-service'
+      uses: azure/container-apps-deploy-action@v1
+      with:
+        appSourcePath: ${{ github.workspace }}/telemetry-service
+        acrName: ${{ env.ACR_NAME }}
+        containerAppName: ${{ env.TELEMETRY_APP_NAME }}
+        resourceGroup: ${{ env.RESOURCE_GROUP }}
+
+    - name: 'Build and deploy ai-service'
+      uses: azure/container-apps-deploy-action@v1
+      with:
+        appSourcePath: ${{ github.workspace }}/ai-service
+        acrName: ${{ env.ACR_NAME }}
+        containerAppName: ${{ env.AI_APP_NAME }}
+        resourceGroup: ${{ env.RESOURCE_GROUP }}
