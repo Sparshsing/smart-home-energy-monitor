@@ -33,6 +33,7 @@ jobs:
       uses: azure/container-apps-deploy-action@v1
       with:
         appSourcePath: ${{ github.workspace }}/auth-service
+        imageToBuild: ${{ env.ACR_NAME }}.azurecr.io/${{ env.AUTH_APP_NAME }}:${{ github.sha }}
         acrName: ${{ env.ACR_NAME }}
         containerAppName: ${{ env.AUTH_APP_NAME }}
         resourceGroup: ${{ env.RESOURCE_GROUP }}
@@ -41,6 +42,7 @@ jobs:
       uses: azure/container-apps-deploy-action@v1
       with:
         appSourcePath: ${{ github.workspace }}/telemetry-service
+        imageToBuild: ${{ env.ACR_NAME }}.azurecr.io/${{ env.TELEMETRY_APP_NAME }}:${{ github.sha }}
         acrName: ${{ env.ACR_NAME }}
         containerAppName: ${{ env.TELEMETRY_APP_NAME }}
         resourceGroup: ${{ env.RESOURCE_GROUP }}
@@ -49,6 +51,7 @@ jobs:
       uses: azure/container-apps-deploy-action@v1
       with:
         appSourcePath: ${{ github.workspace }}/ai-service
+        imageToBuild: ${{ env.ACR_NAME }}.azurecr.io/${{ env.AI_APP_NAME }}:${{ github.sha }}
         acrName: ${{ env.ACR_NAME }}
         containerAppName: ${{ env.AI_APP_NAME }}
         resourceGroup: ${{ env.RESOURCE_GROUP }}
